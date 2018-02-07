@@ -37,7 +37,9 @@ remote_file = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/"+filenam
 local_file = os.path.join(current_dir,filename)
 urllib.request.urlretrieve(remote_file, local_file)
 
+
 #set image as background
 settings = Gio.Settings.new("org.gnome.desktop.background")
 settings.set_string("picture-uri", "file://"+local_file)
 settings.set_string("picture-options", "scaled") #zoom|centered|none|scaled|spanned|stretched|wallpaper
+settings.set_string("primary-color", "#000000") #set background color to black
