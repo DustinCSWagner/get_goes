@@ -10,11 +10,11 @@ Supports:
 * Windows
 * Mac
 * Linux
-  *Gnome
-  *Cinnamon
-  *Mate
-  *Openbox
-  *LXDE
+  * Gnome
+  * Cinnamon
+  * Mate
+  * Openbox
+  * LXDE
 
 Run once to get the most recent image or on a schedule to update your wallpaper through the day. 
 
