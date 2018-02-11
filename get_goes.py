@@ -28,17 +28,24 @@ resolution = image_size["normal"]
 #set current directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-#retrive json
-goes_json = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/catalog.json"
-local_goes_json = os.path.join(current_dir,"catalog.json")
-urllib.request.urlretrieve(goes_json, local_goes_json)
+#clean old json
+if os.path.isfile("catalog.json"):
+    os.remove(os.path.join(current_dir, "catalog.json"))
+
+#download new json
+try:
+    goes_json = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/catalog.json"
+    local_goes_json = os.path.join(current_dir,"catalog.json")
+    urllib.request.urlretrieve(goes_json, local_goes_json)
+except:
+    print("Error downloading json")
+    quit()
 
 #parse json to get latest image filename
 local_json = json.load(open(local_goes_json))
 filename = local_json["links"][resolution]["fullname"]
 
-#check if file already exists
-#quit now or remove other jpg files so that we only have the one we are about to download
+#remove other jpgs, if the names are the same quit now with no change
 if os.path.isfile(filename):
     quit()
 else:
@@ -47,13 +54,17 @@ else:
         os.remove(os.path.join(current_dir, f))
 
 #retrieve image
-remote_file = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/"+filename
-local_file = os.path.join(current_dir,filename)
-urllib.request.urlretrieve(remote_file, local_file)
-
+try:
+    remote_file = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/"+filename
+    local_file = os.path.join(current_dir,filename)
+    urllib.request.urlretrieve(remote_file, local_file)
+except:
+    print("Error downloading jpg")
+    quit()
+    
 #check for desktop enviroment type
 platform=sys.platform
-#print("platform=", platform)
+print("platform=", platform)
 if platform=="win32": #for windows
     try:
         #https://msdn.microsoft.com/en-us/library/windows/desktop/ms724947(v=vs.85).aspx
@@ -65,17 +76,17 @@ if platform=="win32": #for windows
         sys_parameters_info = get_sys_parameters_info()
         r = sys_parameters_info(SPI_SETDESKWALLPAPER, 0, local_file, SPIF_SENDCHANGE)
     except:
-        sys.stderr.write("You can try manually to set Your wallpaper to %s" % local_file)  
+        print("You can try manually to set Your wallpaper to %s" % local_file)  
 elif platform=="darwin": #for mac
     try:
         from appscript import app, mactypes
         app('Finder').desktop_picture.set(mactypes.File(local_file))
     except:
-        sys.stderr.write("You can try manually to set Your wallpaper to %s" % local_file)  
+        print("You can try manually to set Your wallpaper to %s" % local_file)  
 else: #for linux/bsd/...
     #https://stackoverflow.com/questions/1977694/how-can-i-change-my-desktop-background-with-python
     desktop_session = os.environ.get("DESKTOP_SESSION")
-    #print("desktop_session=", desktop_session)
+    print("desktop_session=", desktop_session)
     if desktop_session is not None: 
         desktop_session = desktop_session.lower()         
         if desktop_session=="gnome" or desktop_session=="cinnamon":            
@@ -107,10 +118,10 @@ else: #for linux/bsd/...
                 args = ["feh", "--bg-max", local_file]
                 subprocess.Popen(args)
             except:
-                sys.stderr.write("ERROR: Failed to set wallpaper with feh!\n")
-                sys.stderr.write("Please make sure that you have feh installed.\n")
+                print("ERROR: Failed to set wallpaper with feh!\n")
+                print("Please make sure that you have feh installed.\n")
         else:
-            sys.stderr.write("Unsupported linux/bsd desktop enviroment")  
-            sys.stderr.write("You can manually to set Your wallpaper to %s" % local_file)  
+            print("Unsupported linux/bsd desktop enviroment")  
+            print("You can manually to set Your wallpaper to %s" % local_file)  
 
     
