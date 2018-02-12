@@ -1,8 +1,8 @@
 #!/usr/bin/python3
+#version no quit
 
 import struct, ctypes, json, os, urllib.request, sys, subprocess
 from gi.repository import Gio
-#from subprocess import Popen, PIPE
 
 #windows helper functions
 #set windows wallpaper
@@ -29,25 +29,29 @@ resolution = image_size["normal"]
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 #clean old json
-if os.path.isfile("catalog.json"):
+if os.path.isfile(os.path.join(current_dir, "catalog.json")):
     os.remove(os.path.join(current_dir, "catalog.json"))
 
+goes_json = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/catalog.json"
+local_goes_json = os.path.join(current_dir,"catalog.json")
+    
 #download new json
 try:
-    goes_json = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/catalog.json"
-    local_goes_json = os.path.join(current_dir,"catalog.json")
     urllib.request.urlretrieve(goes_json, local_goes_json)
 except:
-    print("Error downloading json")
+    print("Get Goes: Error downloading json")
     quit()
 
 #parse json to get latest image filename
 local_json = json.load(open(local_goes_json))
 filename = local_json["links"][resolution]["fullname"]
+remote_file = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/"+filename
+local_file = os.path.join(current_dir,filename)
 
 #remove other jpgs, if the names are the same quit now with no change
-if os.path.isfile(filename):
-    quit()
+if os.path.isfile(local_file):
+    print("INFO: same jpg")
+    #quit()
 else:
     filelist = [ f for f in os.listdir(current_dir) if f.endswith(".jpg") ]
     for f in filelist:
@@ -55,11 +59,9 @@ else:
 
 #retrieve image
 try:
-    remote_file = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/"+filename
-    local_file = os.path.join(current_dir,filename)
     urllib.request.urlretrieve(remote_file, local_file)
 except:
-    print("Error downloading jpg")
+    print("ERROR: unable to download jpg")
     quit()
     
 #check for desktop enviroment type
@@ -76,13 +78,13 @@ if platform=="win32": #for windows
         sys_parameters_info = get_sys_parameters_info()
         r = sys_parameters_info(SPI_SETDESKWALLPAPER, 0, local_file, SPIF_SENDCHANGE)
     except:
-        print("You can try manually to set Your wallpaper to %s" % local_file)  
+        print("INFO: You can manually set your wallpaper to %s" % local_file)  
 elif platform=="darwin": #for mac
     try:
         from appscript import app, mactypes
         app('Finder').desktop_picture.set(mactypes.File(local_file))
     except:
-        print("You can try manually to set Your wallpaper to %s" % local_file)  
+        print("INFO: You can manually set your wallpaper to %s" % local_file)  
 else: #for linux/bsd/...
     #https://stackoverflow.com/questions/1977694/how-can-i-change-my-desktop-background-with-python
     desktop_session = os.environ.get("DESKTOP_SESSION")
@@ -90,11 +92,15 @@ else: #for linux/bsd/...
     if desktop_session is not None: 
         desktop_session = desktop_session.lower()         
         if desktop_session=="gnome" or desktop_session=="cinnamon":            
-                #set image as background
+            #set image as background
+            try:
                 settings = Gio.Settings.new("org.gnome.desktop.background")
                 settings.set_string("picture-uri", "file://"+local_file)
                 settings.set_string("picture-options", "scaled") #zoom|centered|none|scaled|spanned|stretched|wallpaper
                 settings.set_string("primary-color", "#000000") #set background color to black
+            except:
+                args = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", "file://"+local_file]
+                subprocess.Popen(args)
         elif desktop_session=="lxde":
             args = "pcmanfm --set-wallpaper %s --wallpaper-mode=fit" % local_file
             subprocess.Popen(args,shell=True)
@@ -111,7 +117,7 @@ else: #for linux/bsd/...
                 subprocess.Popen(args3)
             except: # MATE < 1.6
                 #From https://bugs.launchpad.net/variety/+bug/1033918
-                args = ["mateconftool-2","-t","string","--set","/desktop/mate/background/picture_filename",'"%s"' %local_file]
+                args = ["mateconftool-2","-t","string","--set","/desktop/mate/background/picture_filename",'"%s"' % local_file]
                 subprocess.Popen(args) 
         elif desktop_session=="openbox":
             try:
@@ -119,9 +125,19 @@ else: #for linux/bsd/...
                 subprocess.Popen(args)
             except:
                 print("ERROR: Failed to set wallpaper with feh!\n")
-                print("Please make sure that you have feh installed.\n")
+                print("INFO: Please make sure that you have feh installed.\n")
         else:
-            print("Unsupported linux/bsd desktop enviroment")  
-            print("You can manually to set Your wallpaper to %s" % local_file)  
+            print("ERROR: Unsupported linux/bsd desktop enviroment")  
+            print("INFO: You can manually to set Your wallpaper to %s" % local_file)
+    else:
+        #fail back to gnome becuase thats what I use ;)
+        try:
+            settings = Gio.Settings.new("org.gnome.desktop.background")
+            settings.set_string("picture-uri", "file://"+local_file)
+            settings.set_string("picture-options", "scaled") #zoom|centered|none|scaled|spanned|stretched|wallpaper
+            settings.set_string("primary-color", "#000000") #set background color to black
+        except:
+            args = ["gsettings", "set", "org.gnome.desktop.background", "picture-uri", "file://"+local_file]
+            subprocess.Popen(args)
 
     
