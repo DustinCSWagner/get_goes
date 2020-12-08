@@ -28,37 +28,13 @@ resolution = image_size["normal"]
 #set current directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-#clean old json
-if os.path.isfile(os.path.join(current_dir, "catalog.json")):
-    os.remove(os.path.join(current_dir, "catalog.json"))
-
-goes_json = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/catalog.json"
-local_goes_json = os.path.join(current_dir,"catalog.json")
-    
-#download new json
-try:
-    urllib.request.urlretrieve(goes_json, local_goes_json)
-except:
-    print("Get Goes: Error downloading json")
-    quit()
-
-#parse json to get latest image filename
-local_json = json.load(open(local_goes_json))
-filename = local_json["links"][resolution]["fullname"]
+filename = "latest.jpg"
 remote_file = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/"+filename
 local_file = os.path.join(current_dir,filename)
 
-#remove other jpgs, if the names are the same quit now with no change
-if os.path.isfile(local_file):
-    print("INFO: same jpg")
-    #quit()
-else:
-    filelist = [ f for f in os.listdir(current_dir) if f.endswith(".jpg") ]
-    for f in filelist:
-        os.remove(os.path.join(current_dir, f))
-
 #retrieve image
 try:
+    #print('skipping new image')
     urllib.request.urlretrieve(remote_file, local_file)
 except:
     print("ERROR: unable to download jpg")
