@@ -29,7 +29,11 @@ resolution = image_size["normal"]
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 filename = "latest.jpg"
-remote_file = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/"+filename
+#note there is a https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/1808x1808.jpg
+#and a https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/latest.jpg
+# and the other resolutions, too
+# the 1808x1808 is 660KB, latest.jpg is 80MB. however latest does not have the NOAA branding, if you want that
+remote_file = "https://cdn.star.nesdis.noaa.gov/GOES16/ABI/FD/GEOCOLOR/1808x1808.jpg"
 local_file = os.path.join(current_dir,filename)
 
 #retrieve image
